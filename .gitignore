@@ -45,6 +45,9 @@ ehthumbs.db
 *.swp
 *.bak
 
+
+ROMS/
+
 # --- Optional: exclude external dependencies ---
 # If you use a local libs/ folder for dependencies:
 # libs/
