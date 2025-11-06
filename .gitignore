@@ -47,6 +47,8 @@ ehthumbs.db
 
 
 ROMS/
+include/
+sm83-main/
 
 # --- Optional: exclude external dependencies ---
 # If you use a local libs/ folder for dependencies:

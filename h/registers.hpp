@@ -1,0 +1,8 @@
+//
+// Created by akith on 10/31/2025.
+//
+
+#ifndef GBEMULATOR_REGISTERS_HPP
+#define GBEMULATOR_REGISTERS_HPP
+
+#endif //GBEMULATOR_REGISTERS_HPP
