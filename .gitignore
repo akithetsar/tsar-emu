@@ -49,7 +49,7 @@ ehthumbs.db
 ROMS/
 include/
 sm83-main/
-
+test_rom_temp.gb
 # --- Optional: exclude external dependencies ---
 # If you use a local libs/ folder for dependencies:
 # libs/

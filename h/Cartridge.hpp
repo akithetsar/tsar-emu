@@ -5,7 +5,6 @@
 #ifndef GBEMULATOR_CARTRIDGE_HPP
 #define GBEMULATOR_CARTRIDGE_HPP
 
-
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -26,23 +25,16 @@ public:
 
     explicit Cartridge(const std::string& cartridge_file);
 
-
     uint8_t read(uint16_t addr);
 
     void printMemory();
     bool verifyHeader();
-
 
 private:
 
     std::vector<uint8_t> rom;
     RomSizeEntry romSize;
 
-
-
-
-
 };
-
 
 #endif //GBEMULATOR_CARTRIDGE_HPP

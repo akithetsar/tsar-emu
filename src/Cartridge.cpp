@@ -10,7 +10,6 @@
 #include "../h/metadata.hpp"
 #include "../h/log.h"
 
-
 Cartridge::Cartridge(const std::string& cartridge_file) {
     std::ifstream file(cartridge_file, std::ios::binary | std::ios::ate);
 
@@ -45,14 +44,11 @@ void Cartridge::printMemory() {
     printf("Cartridge type: %02X\n", rom[0x0147]);
     printf("ROM size code: %02X\n", rom[0x0148]);
     printf("RAM size code: %02X\n", rom[0x0149]);
-    std::cout << std::dec << "\n"; // switch back to decimal output
+    std::cout << std::dec << "\n";
 
 }
 
-
-
 bool Cartridge::verifyHeader() {
-
 
     //Checking for Nintendo Logo
     for (int i = 0; i < NINTENDO_LOGO.size(); ++i) {
@@ -77,9 +73,6 @@ bool Cartridge::verifyHeader() {
 
     uint16_t expectedChecksum = (rom[0x014E] << 8) | rom[0x014F];
     if (computedGlobalChecksum != expectedChecksum) return false;
-
-
-
 
     return true;
 }

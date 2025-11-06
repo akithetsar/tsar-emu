@@ -21,5 +21,4 @@ void Emulator::bootEmu() {
 
     //Run boot ROM
 
-
 }
