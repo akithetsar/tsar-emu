@@ -18,9 +18,10 @@ public:
         :   cartridge{std::make_unique<Cartridge>(cartridge_file)},
             wram{std::make_unique<WRAM>()},
             bus{std::make_unique<Bus>(cartridge.get(),wram.get())},
+            ppu{std::make_unique<PPU>(bus.get())},
             cpu{std::make_unique<CPU>(bus.get())}
     {
-
+        bus->setPPU(ppu.get());
     }
 
     void bootEmu();
@@ -29,7 +30,7 @@ public:
     std::unique_ptr<WRAM> wram;
     std::unique_ptr<Bus> bus;
     std::unique_ptr<CPU> cpu;
-
+    std::unique_ptr<PPU> ppu;
 };
 
 #endif //GBEMULATOR_EMULATOR_HPP

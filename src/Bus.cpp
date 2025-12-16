@@ -14,7 +14,7 @@ uint8_t Bus::read8(uint16_t addr) {
 
     // VRAM (0x8000-0x9FFF)
     if (addr < 0xA000) {
-        return vram[addr - 0x8000];
+        return ppu->vram[addr - 0x8000];
     }
 
     // External RAM (0xA000-0xBFFF) - Cartridge
@@ -34,7 +34,7 @@ uint8_t Bus::read8(uint16_t addr) {
 
     // OAM (0xFE00-0xFE9F)
     if (addr < 0xFEA0) {
-        return oam[addr - 0xFE00];
+        return ppu->oam[addr - 0xFE00];
     }
 
     // Forbidden (0xFEA0-0xFEFF)
@@ -77,7 +77,7 @@ void Bus::write8(uint16_t addr, uint8_t val) {
 
     // VRAM (0x8000-0x9FFF)
     if (addr < 0xA000) {
-        vram[addr - 0x8000] = val;
+        ppu->vram[addr - 0x8000] = val;
         return;
     }
 
@@ -101,7 +101,7 @@ void Bus::write8(uint16_t addr, uint8_t val) {
 
     // OAM (0xFE00-0xFE9F)
     if (addr < 0xFEA0) {
-        oam[addr - 0xFE00] = val;
+        ppu->oam[addr - 0xFE00] = val;
         return;
     }
 
@@ -118,6 +118,17 @@ void Bus::write8(uint16_t addr, uint8_t val) {
             case 0xFF05: timer->setTIMA(val); return;
             case 0xFF06: timer->setTMA(val); return;
             case 0xFF07: timer->setTAC(val); return;
+            case 0xFF44: ppu->setLy(val); return;
+            case 0xFF45: ppu->setLyc(val); return;
+            case 0xFF41: ppu->setStat(val); return;
+            case 0xFF40: ppu->setLcdc(val); return;
+            case 0xFF42: ppu->setScy(val); return;
+            case 0xFF43: ppu->setScx(val); return;
+            case 0xFF4A: ppu->setWy(val); return;
+            case 0xFF4B: ppu->setWx(val); return;
+            case 0xFF47: ppu->setBgp(val); return;
+            case 0xFF48: ppu->setObp0(val); return;
+            case 0xFF49: ppu->setObp1(val); return;
         }
 
         io_registers[addr - 0xFF00] = val;
@@ -132,4 +143,8 @@ void Bus::write8(uint16_t addr, uint8_t val) {
 
     // IE Register (0xFFFF)
     ie_register = val;
+}
+
+void Bus::setPPU(PPU *nppu) {
+    ppu = nppu;
 }
