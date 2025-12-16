@@ -118,7 +118,9 @@ public:
 
     // 0x10: STOP
     static inline int OP_0x10(CPU &cpu, uint8_t opcode) {
-//        cpu.fetch8();  // STOP consumes next byte
+        cpu.fetch8();  // STOP consumes next byte
+
+        cpu.halt = true;
         return cyclesNonCB(opcode);
     }
 
@@ -738,7 +740,9 @@ public:
     }
 
     // HALT (0x76)
-    static inline int OP_0x76(CPU &, uint8_t opcode) { return cyclesNonCB(opcode);  }
+    static inline int OP_0x76(CPU &cpu, uint8_t opcode) {
+        cpu.halt = true;
+        return cyclesNonCB(opcode);  }
 
     static inline int OP_0x77(CPU &cpu, uint8_t opcode) {
         cpu.OP_ld_r8_r8(opcode);
@@ -1278,7 +1282,7 @@ public:
 
     //RETI
     static inline int OP_0xD9(CPU &cpu, uint8_t opcode) {
-        //todo: enable interrupt
+        cpu.IME = true;
         cpu.OP_ret();
         return cyclesNonCB(opcode);
     }
@@ -1467,8 +1471,9 @@ public:
         return cyclesNonCB(opcode);
     }
 
-    static inline int OP_0xF3(CPU &, uint8_t opcode) {
-        //todo: disable interrupts ime
+    //DI
+    static inline int OP_0xF3(CPU &cpu, uint8_t opcode) {
+        cpu.IME = false;
         return cyclesNonCB(opcode);
     }
 
@@ -1530,8 +1535,9 @@ public:
         return cyclesNonCB(opcode);
     }
 
-    static inline int OP_0xFB(CPU &, uint8_t opcode) {
-        //todo: enable interrupts ime
+    //EI
+    static inline int OP_0xFB(CPU &cpu, uint8_t opcode) {
+        cpu.schedule_ei = true;
         return cyclesNonCB(opcode);
     }
 

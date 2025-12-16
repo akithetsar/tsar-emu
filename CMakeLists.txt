@@ -15,6 +15,7 @@ add_library(gbemulator_lib STATIC
         src/Bus.cpp
         src/log.cpp
         src/CPU.cpp
+        src/Timer.cpp
 )
 
 # Main emulator executable

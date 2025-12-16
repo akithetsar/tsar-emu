@@ -17,7 +17,7 @@ public:
     reg16 SP;  // Stack Pointer
     reg16 PC;  // Program Counter
 
-    explicit CPU(Bus *bus) : bus{bus} {
+    explicit CPU(Bus *bus) : bus{bus}, schedule_ei(false), schedule_IME(false), IME(false), halt(false), halt_bug(false) {
         // Initialize registers
         AF.reset();
         BC.reset();
@@ -26,7 +26,7 @@ public:
         SP.reset();
         PC.reset();
         mapOPCodes();
-        mapCBOPCodes();  // Add this line
+        mapCBOPCodes();
         A().set(0x01);
         F().set(0xB0);
         B().set(0x00);
@@ -41,6 +41,16 @@ public:
     }
     void logState();
     int cycle();
+
+    bool schedule_ei;
+    bool schedule_IME;
+    bool IME;
+    bool halt;
+    bool halt_bug;
+    int handleInterrupts();
+    static constexpr uint16_t IF = 0xFF0F;
+    static constexpr uint16_t IE = 0xFFFF;
+
 
     // Access to 8-bit registers through references
     reg8& A() { return AF.get_high(); }
@@ -125,7 +135,13 @@ private:
     GbFunc opTable[256]{};
     GbFunc cbOpTable[256]{};
 
-    inline uint8_t fetch8() { return bus->read8(PC++); }
+    inline uint8_t fetch8() {
+        uint8_t val = bus->read8(PC);
+        if (!halt_bug)
+            PC++;
+        halt_bug = false;
+        return val;
+    }
 
     void mapOPCodes();
     void mapCBOPCodes();
@@ -219,4 +235,6 @@ private:
         inline uint8_t operator--(int)   { uint8_t old=get(); set(uint8_t(old-1)); return old; }
 
     };
+
+
 };

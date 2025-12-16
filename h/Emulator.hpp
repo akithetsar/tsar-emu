@@ -20,7 +20,7 @@ public:
             bus{std::make_unique<Bus>(cartridge.get(),wram.get())},
             cpu{std::make_unique<CPU>(bus.get())}
     {
-        bus->mapMemory();
+
     }
 
     void bootEmu();

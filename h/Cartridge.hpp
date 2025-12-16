@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+
 class Cartridge {
 public:
     struct HeaderSection {
@@ -16,25 +17,24 @@ public:
         const char* name;
         const char* description;
     };
+
     struct RomSizeEntry {
         uint8_t code;        // Value stored at 0x0148
         uint32_t sizeBytes;  // Total ROM size in bytes
         uint16_t numBanks;   // Number of 16 KiB banks
     };
 
-
     explicit Cartridge(const std::string& cartridge_file);
 
     uint8_t read(uint16_t addr);
+    void write(uint16_t addr, uint8_t val);  // Add this
 
     void printMemory();
     bool verifyHeader();
 
 private:
-
     std::vector<uint8_t> rom;
     RomSizeEntry romSize;
-
 };
 
 #endif //GBEMULATOR_CARTRIDGE_HPP

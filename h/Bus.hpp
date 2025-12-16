@@ -5,84 +5,45 @@
 #ifndef GBEMULATOR_BUS_HPP
 #define GBEMULATOR_BUS_HPP
 
-
 #include <cstdint>
 #include <array>
-#include <iostream>
+#include "Timer.hpp"
+#include "registers.hpp"
 
 class Cartridge;
 class WRAM;
 
-class Bus{
-
+class Bus {
 public:
-
-    uint8_t ie_register;  // Interrupt Enable at 0xFFFF
-    Bus(Cartridge* cart, WRAM* wram) : cartridge{cart}, wram(wram), ie_register(0) {
+    Bus(Cartridge* cart, WRAM* wram)
+            : cartridge(cart), wram(wram), ie_register(0) {
         hram.fill(0);
-    }
-
-    using ReadFn  = uint8_t(*)(Bus&, uint16_t);
-    using WriteFn = void(*)(Bus&, uint16_t, uint8_t);
-
-    inline uint8_t read8(uint16_t addr){
-        if (addr == 0xFF44){
-            return 0x90;
-        }
-        Page& page = pageTable[addr >> 8];
-        if(__builtin_expect(page.hotRead != nullptr, 1)){
-            return page.hotRead[addr & 0xFF];
-        }
-
-        return page.coldRead(*this, addr);
+        io_registers.fill(0xFF);
+        oam.fill(0);
+        vram.fill(0);
+        timer = new Timer(this);
 
     }
-
-    inline void write8(uint16_t addr, uint8_t val){
-
-        Page& page = pageTable[addr >> 8];
-        if(__builtin_expect(page.hotWrite != nullptr, 1)){
-            page.hotWrite[addr & 0xFF] = val;
-            return;
-        }
-
-        page.coldWrite(*this, addr, val);
+    ~Bus() {
+        delete timer;
     }
-
-    void mapMemory();
-
-    void mapHotpath(uint16_t startAddr, uint16_t endAddr, uint8_t* base, bool writable);
-    void mapColdpath(uint16_t startAddr, uint16_t endAddr, ReadFn r, WriteFn w);
-
+    uint8_t read8(uint16_t addr);
+    void write8(uint16_t addr, uint8_t val);
+    void tick(int cycles) { timer->tick(cycles); }
 
     Cartridge* cartridge = nullptr;
-    WRAM*      wram = nullptr;
-
+    WRAM* wram = nullptr;
+    Timer* timer = nullptr;
+    reg8 IE;
+    reg8 IF;
 private:
+    // Memory regions
+    std::array<uint8_t, 0x2000> vram;        // 0x8000-0x9FFF:  Video RAM
+    std::array<uint8_t, 0xA0>   oam;         // 0xFE00-0xFE9F: Object Attribute Memory
+    std::array<uint8_t, 0x7F>   hram;        // 0xFF80-0xFFFE: High RAM
+    std::array<uint8_t, 0x80>   io_registers;// 0xFF00-0xFF7F: I/O Registers
 
-    std::array<uint8_t, 127> hram;
-    struct Page{
-        uint8_t* hotRead = nullptr;
-        uint8_t* hotWrite = nullptr;
-        ReadFn coldRead = nullptr;
-        WriteFn coldWrite = nullptr;
-    };
-    std::array<Page, 256> pageTable;
-
-
-    //Handlers
-    static uint8_t forbbiddenRead(Bus&, uint16_t);
-    static void forbbiddenWrite(Bus&, uint16_t, uint8_t);
-    static uint8_t cartridgeRead(Bus&, uint16_t);
-    static void cartridgeWrite(Bus&, uint16_t, uint8_t);
-    static uint8_t ioRead(Bus&, uint16_t);
-    static void ioWrite(Bus&, uint16_t, uint8_t);
-    uint8_t *wramBankPtr() const;
-    static uint8_t echoRamRead(Bus&, uint16_t);
-    static void echoRamWrite(Bus&, uint16_t, uint8_t);
-    static uint8_t ffPageRead(Bus &b, uint16_t addr);
-
-    static void ffPageWrite(Bus &b, uint16_t addr, uint8_t val);
+    uint8_t ie_register;                     // 0xFFFF: Interrupt Enable
 };
 
 #endif //GBEMULATOR_BUS_HPP

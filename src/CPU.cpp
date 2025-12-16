@@ -6,45 +6,51 @@
 #include "../h/CPU.h"
 #include "../h/opcodes.h"
 int CPU::cycle() {
+    int cycles = 0;
 
+    // ---- HALT ----
+    if (halt) {
+        bus->tick(4);
+
+        uint8_t ie = bus->read8(IE);
+        uint8_t iff = bus->read8(IF);
+
+        if (ie & iff) {
+            halt = false;
+            if (!IME)
+                halt_bug = true;
+        }
+
+        return 4;
+    }
     logState();
+
+    // ---- FETCH + EXECUTE ----
     uint8_t opcode = fetch8();
 
-    if (opcode == 0xCB)
-    {
-        opcode = fetch8();
-        return cbOpTable[opcode](*this, opcode);
-        return 0;
+    if (opcode == 0xCB) {
+        uint8_t cb = fetch8();
+        cycles = cbOpTable[cb](*this, cb);
+    } else {
+        cycles = opTable[opcode](*this, opcode);
     }
 
-    int t = opTable[opcode](*this, opcode);
+    bus->tick(cycles);
 
-//    std::cout << '\n';
-//    std::cout << "-----------------" << '\n';
-//    std::cout << std::uppercase << std::setfill('0'); // optional: uppercase A-F
-//
-//    std::cout << "PC: 0x" << std::setw(4) << std::hex << static_cast<uint16_t>(PC) << '\n';
-//    std::cout << "SP: 0x" << std::setw(4) << std::hex << static_cast<uint16_t>(SP) << '\n';
-//    std::cout << "AF: 0x" << std::setw(4) << std::hex << static_cast<uint16_t>(AF) << '\n';
-//    std::cout << "BC: 0x" << std::setw(4) << std::hex << static_cast<uint16_t>(BC) << '\n';
-//    std::cout << "DE: 0x" << std::setw(4) << std::hex << static_cast<uint16_t>(DE) << '\n';
-//    std::cout << "HL: 0x" << std::setw(4) << std::hex << static_cast<uint16_t>(HL) << '\n';
-//
-//    std::cout << std::dec; // switch back to decimal for flags
-//    std::cout << "Z: " << get_flag_Z() << '\n';
-//    std::cout << "N: " << get_flag_N() << '\n';
-//    std::cout << "H: " << get_flag_H() << '\n';
-//    std::cout << "C: " << get_flag_C() << '\n';
-//    std::cout << "-----------------" << '\n';
+    // EI delay
+    if (schedule_ei) {
+        schedule_IME = true;
+        schedule_ei = false;
+    } else if (schedule_IME) {
+        IME = true;
+        schedule_IME = false;
+    }
 
+    // Interrupts handle
+    cycles += handleInterrupts();
 
-
-    return t;
-
-
-
+    return cycles;
 }
-
 void CPU::mapOPCodes() {
     opTable[0x00] = opcodes::OP_0x00;
     opTable[0x01] = opcodes::OP_0x01;
@@ -1093,6 +1099,41 @@ void CPU::logState() {
               << std::setw(2) << std::hex << static_cast<int>(pcmem[2]) << ","
               << std::setw(2) << std::hex << static_cast<int>(pcmem[3])
               << std::dec << '\n';
+}
+
+
+int CPU::handleInterrupts() {
+    if (!IME)
+        return 0;
+
+    uint8_t if_reg = bus->read8(IF);
+    uint8_t ie_reg = bus->read8(IE);
+
+    uint8_t pending = if_reg & ie_reg;
+    if (pending == 0)
+        return 0;
+
+    IME = false;
+
+    uint16_t vector = 0;
+    uint8_t bit = 0;
+
+    if (pending & 0x01) { vector = 0x40; bit = 0; }
+    else if (pending & 0x02) { vector = 0x48; bit = 1; }
+    else if (pending & 0x04) { vector = 0x50; bit = 2; }
+    else if (pending & 0x08) { vector = 0x58; bit = 3; }
+    else if (pending & 0x10) { vector = 0x60; bit = 4; }
+
+    bus->write8(IF, if_reg & ~(1 << bit));
+
+    SP--;
+    bus->write8(SP, (PC >> 8) & 0xFF);
+    SP--;
+    bus->write8(SP, PC & 0xFF);
+
+    PC = vector;
+
+    return 20;
 }
 
 inline uint8_t CPU::R8Ref::get() const {
