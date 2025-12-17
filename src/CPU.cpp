@@ -36,8 +36,8 @@ int CPU::cycle() {
     }
 
     bus->tick(cycles);
-    std::cout << "Executed op: 0x" << std::hex << std::setw(2) << std::setfill('0')
-              << static_cast<int>(opcode) << " in " << std::dec << cycles << " cycles" << std::endl;
+//    std::cout << "Executed op: 0x" << std::hex << std::setw(2) << std::setfill('0')
+//              << static_cast<int>(opcode) << " in " << std::dec << cycles << " cycles" << std::endl;
 
     // EI delay
     if (schedule_ei) {

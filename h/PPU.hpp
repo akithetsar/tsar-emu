@@ -7,7 +7,22 @@
 
 #include <array>
 #include <cstdint>
+#include <vector>
+
 class Bus;
+struct Sprite {
+    uint8_t y;          // Y position in OAM (screen Y = y - 16)
+    uint8_t x;          // X position in OAM (screen X = x - 8)
+    uint8_t tileIndex;  // Tile number
+    uint8_t flags;      // Attributes
+    uint8_t oamIndex;   // Original index in OAM (for priority)
+
+    // Helper methods to extract flags
+    bool priority() const { return flags & 0x80; }      // 0=above BG, 1=behind BG
+    bool yFlip() const { return flags & 0x40; }
+    bool xFlip() const { return flags & 0x20; }
+    bool palette() const { return flags & 0x10; }       // 0=OBP0, 1=OBP1
+};
 class PPU {
 
 public:
@@ -47,6 +62,7 @@ public:
     PPU_MODE mode;
     int dots;
 
+    std::array<uint8_t, 160 * 144> framebuffer{};
 
     void run(int cycles);
     void setMode(PPU_MODE nmode);
@@ -56,6 +72,8 @@ public:
 
 
     void renderScanline();
+    uint8_t getTilePixel(uint16_t tileAddr, uint8_t x, uint8_t y);
+    uint8_t applyPalette(uint8_t colorId, uint8_t palette);
 
     void incrementLY();
 
@@ -67,6 +85,17 @@ public:
 
     void checkLYC();
     Bus* bus;
+
+    uint8_t renderWindowPixel(int x);
+
+    uint8_t renderBackgroundPixel(int x);
+
+private:
+    std::vector<Sprite> scanlineSprites;  // Sprites visible on current scanline
+
+    void evaluateSprites();  // Find sprites for current scanline
+    void renderSprites();    // Render sprites to scanline
+    uint8_t getSpriteTilePixel(const Sprite& sprite, int spriteX, int spriteY);
 };
 
 
