@@ -8,8 +8,13 @@ uint8_t Bus::read8(uint16_t addr) {
         return cartridge->read(addr);
     }
 
+
     // VRAM (0x8000-0x9FFF)
     if (addr < 0xA000) {
+        // Check if VRAM is accessible (blocked during mode 3)
+        if (!canAccessVRAM()) {
+            return 0xFF;  // Return 0xFF when blocked
+        }
         return ppu->vram[addr - 0x8000];
     }
 
@@ -30,8 +35,13 @@ uint8_t Bus::read8(uint16_t addr) {
 
     // OAM (0xFE00-0xFE9F)
     if (addr < 0xFEA0) {
+        // Check if OAM is accessible (blocked during modes 2 and 3)
+        if (!canAccessOAM()) {
+            return 0xFF;  // Return 0xFF when blocked
+        }
         return ppu->oam[addr - 0xFE00];
     }
+
 
     // Forbidden (0xFEA0-0xFEFF)
     if (addr < 0xFF00) {
@@ -40,6 +50,27 @@ uint8_t Bus::read8(uint16_t addr) {
 
     // I/O Registers (0xFF00-0xFF7F)
     if (addr < 0xFF80) {
+        // Joypad register
+        if (addr == 0xFF00) {
+            uint8_t joypad = io_registers[0x00];  // Get button selection bits
+
+            // Check which button group is selected
+            bool selectButtons = !(joypad & 0x20);  // Bit 5: 0 = select buttons
+            bool selectDpad = !(joypad & 0x10);     // Bit 4: 0 = select d-pad
+
+            uint8_t result = joypad | 0x0F;
+
+            if (selectButtons) {
+                result &= (joypad_state >> 4) | 0xF0;
+            }
+
+            if (selectDpad) {
+                result &= (joypad_state & 0x0F) | 0xF0;
+            }
+
+            return result;
+        }
+
         // PPU registers
         switch (addr) {
             case 0xFF40: return ppu->LCDC;
@@ -53,6 +84,9 @@ uint8_t Bus::read8(uint16_t addr) {
             case 0xFF49: return ppu->OBP1;
             case 0xFF4A: return ppu->WY;
             case 0xFF4B: return ppu->WX;
+        }
+        if (addr == 0xFF46) {
+            return ppu->dmaSource;
         }
 
         // Timer registers
@@ -84,6 +118,9 @@ void Bus::write8(uint16_t addr, uint8_t val) {
 
     // VRAM (0x8000-0x9FFF)
     if (addr < 0xA000) {
+        if (!canAccessVRAM()) {
+            return;
+        }
         ppu->vram[addr - 0x8000] = val;
         return;
     }
@@ -108,17 +145,25 @@ void Bus::write8(uint16_t addr, uint8_t val) {
 
     // OAM (0xFE00-0xFE9F)
     if (addr < 0xFEA0) {
+        if (!canAccessOAM()) {
+            return;
+        }
         ppu->oam[addr - 0xFE00] = val;
         return;
     }
 
     // Forbidden (0xFEA0-0xFEFF)
     if (addr < 0xFF00) {
-        return; // Writes ignored
+        return;
     }
 
     // I/O Registers (0xFF00-0xFF7F)
     if (addr < 0xFF80) {
+        // Joypad register
+        if (addr == 0xFF00) {
+            io_registers[0x00] = val & 0x30;
+            return;
+        }
         // PPU registers
         switch (addr) {
             case 0xFF40: ppu->setLcdc(val); return;
@@ -133,7 +178,10 @@ void Bus::write8(uint16_t addr, uint8_t val) {
             case 0xFF4A: ppu->setWy(val); return;
             case 0xFF4B: ppu->setWx(val); return;
         }
-
+        if (addr == 0xFF46) {
+            ppu->startDMA(val);
+            return;
+        }
         // Timer registers
         switch (addr) {
             case 0xFF04: timer->setDIV(val); return;
@@ -158,4 +206,17 @@ void Bus::write8(uint16_t addr, uint8_t val) {
 
 void Bus::setPPU(PPU *nppu) {
     ppu = nppu;
+}
+
+bool Bus::canAccessVRAM() const {
+    if (! ppu) return true;
+    if (!(ppu->LCDC & 0x80)) return true;
+    return ppu->mode != PPU:: PPU_MODE::Drawing;
+}
+
+bool Bus::canAccessOAM() const {
+    if (!ppu) return true;
+    if (!(ppu->LCDC & 0x80)) return true;
+    return ppu->mode != PPU::PPU_MODE::OAMScan &&
+           ppu->mode != PPU::PPU_MODE::Drawing;
 }

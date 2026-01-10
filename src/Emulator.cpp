@@ -19,6 +19,4 @@ void Emulator::bootEmu() {
         std::cout << "Header bad";
     }
 
-    //Run boot ROM
-
 }

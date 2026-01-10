@@ -37,6 +37,10 @@ public:
     PPU* ppu = nullptr;
     reg8 IE;
     reg8 IF;
+    bool canAccessVRAM() const;
+    bool canAccessOAM() const;
+    uint8_t joypad_state = 0xFF;
+    void setJoypadState(uint8_t state) { joypad_state = state; }
 private:
     // Memory regions
     std::array<uint8_t, 0x7F>   hram;        // 0xFF80-0xFFFE: High RAM

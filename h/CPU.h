@@ -37,6 +37,12 @@ public:
         L().set(0x4D);
         SP.set(0xFFFE);
         PC.set(0x0100);
+        PC = 0x0100;  // Start of cartridge code
+        SP = 0xFFFE;  // Stack pointer
+        AF = 0x01B0;  // A=0x01, F=0xB0
+        BC = 0x0013;
+        DE = 0x00D8;
+        HL = 0x014D;
 
     }
     void logState();
@@ -83,7 +89,7 @@ public:
         }
     }
 
-    // Get 8-bit register by mask (for common instruction encoding)
+    // Get 8-bit register by mask
     reg8& getReg8(uint8_t mask) {
         switch (mask) {
             case 0: return B();

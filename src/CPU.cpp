@@ -1073,17 +1073,15 @@ void CPU::OP_set(uint8_t opcode) {
 }
 
 void CPU::logState() {
-    // Format the flags register properly
     uint8_t f = F().get();
 
-    // Read the next 4 bytes at PC for PCMEM
     uint16_t pc = PC.get();
     uint8_t pcmem[4];
     for (int i = 0; i < 4; i++) {
         pcmem[i] = bus->read8(pc + i);
     }
 
-    // Output in gameboy-doctor format
+    // Output in gameboy-doctor format for testing
     std::cout << std::uppercase << std::setfill('0');
     std::cout << "A:" << std::setw(2) << std::hex << static_cast<int>(A().get())
               << " F:" << std::setw(2) << std::hex << static_cast<int>(f)

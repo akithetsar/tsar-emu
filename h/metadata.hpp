@@ -123,7 +123,6 @@ constexpr OpCycles Pair(uint8_t a, uint8_t b) { return OpCycles{a, b}; }
 // Values match Pan Docs / gbdev Opcodes.json semantics (in T-cycles).
 constexpr std::array<OpCycles, 256> makeBaseCycles() {
     std::array<OpCycles, 256> c{};
-    // Default to 0 for all (invalid/unused opcodes will remain 0,0)
     for (auto& e : c) e = Single(0);
 
     // 0x00 .. 0x0F
@@ -301,12 +300,11 @@ constexpr std::array<OpCycles, 256> makeCBCycles() {
 inline constexpr std::array<OpCycles, 256> OPCODE_CYCLES = makeBaseCycles();
 inline constexpr std::array<OpCycles, 256> CB_OPCODE_CYCLES = makeCBCycles();
 
-// Pick the appropriate cycle count for a conditional instruction where "taken" might apply.
 constexpr uint8_t cyclesNonCB(uint8_t opcode, bool taken = false) {
     const auto& oc = OPCODE_CYCLES[opcode];
     return (!taken || oc.alt == 0) ? oc.base : oc.alt;
 }
 constexpr uint8_t cyclesCB(uint8_t cbOpcode) {
-    return CB_OPCODE_CYCLES[cbOpcode].base; // CB ops have single cycle value (8 or 16)
+    return CB_OPCODE_CYCLES[cbOpcode].base;
 }
 #endif //GBEMULATOR_METADATA_HPP

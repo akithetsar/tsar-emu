@@ -11,17 +11,17 @@
 
 class Bus;
 struct Sprite {
-    uint8_t y;          // Y position in OAM (screen Y = y - 16)
-    uint8_t x;          // X position in OAM (screen X = x - 8)
-    uint8_t tileIndex;  // Tile number
-    uint8_t flags;      // Attributes
-    uint8_t oamIndex;   // Original index in OAM (for priority)
+    uint8_t y;
+    uint8_t x;
+    uint8_t tileIndex;
+    uint8_t flags;
+    uint8_t oamIndex;
 
     // Helper methods to extract flags
-    bool priority() const { return flags & 0x80; }      // 0=above BG, 1=behind BG
+    bool priority() const { return flags & 0x80; }
     bool yFlip() const { return flags & 0x40; }
     bool xFlip() const { return flags & 0x20; }
-    bool palette() const { return flags & 0x10; }       // 0=OBP0, 1=OBP1
+    bool palette() const { return flags & 0x10; }
 };
 class PPU {
 
@@ -29,7 +29,7 @@ public:
     PPU(Bus* bus);
 
 
-    void setLcdc(uint8_t lcdc) {LCDC = lcdc;}
+    void setLcdc(uint8_t value);
     void setStat(uint8_t stat) {STAT = stat;}
     void setScx(uint8_t scx) {SCX = scx;}
     void setScy(uint8_t scy) {SCY = scy;}
@@ -79,6 +79,13 @@ public:
 
     bool frame_ready;
 
+    bool dmaActive = false;
+    int dmaCycles = 0;
+    uint8_t dmaSource = 0;
+
+    void startDMA(uint8_t value);
+    void tickDMA(int cycles);
+
     void requestVBlankInterrupt();
 
     void requestSTATInterrupt();
@@ -91,10 +98,10 @@ public:
     uint8_t renderBackgroundPixel(int x);
 
 private:
-    std::vector<Sprite> scanlineSprites;  // Sprites visible on current scanline
+    std::vector<Sprite> scanlineSprites;
 
-    void evaluateSprites();  // Find sprites for current scanline
-    void renderSprites();    // Render sprites to scanline
+    void evaluateSprites();
+    void renderSprites();
     uint8_t getSpriteTilePixel(const Sprite& sprite, int spriteX, int spriteY);
 };
 

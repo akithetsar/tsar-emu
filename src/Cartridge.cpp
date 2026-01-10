@@ -67,7 +67,7 @@ bool Cartridge::verifyHeader() {
     uint16_t computedGlobalChecksum = 0;
     for (uint32_t address = 0; address < romSize.sizeBytes; ++address) {
         if (address == 0x014E || address == 0x014F)
-            continue; // skip the checksum bytes themselves
+            continue;
         computedGlobalChecksum += rom[address];
     }
 
@@ -81,11 +81,4 @@ uint8_t Cartridge::read(uint16_t addr) {
     return rom[addr];
 }
 void Cartridge::write(uint16_t addr, uint8_t val) {
-    // For ROM-only cartridges (type 0x00), writes are ignored
-    // Later, when you implement MBC (Memory Bank Controllers),
-    // this is where you'd handle bank switching
-
-    // For now, just ignore writes to ROM
-    // You could add logging here for debugging:
-    // std::cout << "Write to ROM at 0x" << std::hex << addr << " ignored\n";
 }

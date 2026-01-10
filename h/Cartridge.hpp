@@ -19,15 +19,15 @@ public:
     };
 
     struct RomSizeEntry {
-        uint8_t code;        // Value stored at 0x0148
-        uint32_t sizeBytes;  // Total ROM size in bytes
-        uint16_t numBanks;   // Number of 16 KiB banks
+        uint8_t code;
+        uint32_t sizeBytes;
+        uint16_t numBanks;
     };
 
     explicit Cartridge(const std::string& cartridge_file);
 
     uint8_t read(uint16_t addr);
-    void write(uint16_t addr, uint8_t val);  // Add this
+    void write(uint16_t addr, uint8_t val);
 
     void printMemory();
     bool verifyHeader();

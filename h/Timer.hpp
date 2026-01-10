@@ -32,14 +32,14 @@ private:
     Bus* bus;
 
     // Timer registers
-    uint8_t div;   // 0xFF04 - Divider Register (increments at 16384 Hz)
-    uint8_t tima;  // 0xFF05 - Timer Counter (increments at frequency specified by TAC)
-    uint8_t tma;   // 0xFF06 - Timer Modulo (value loaded into TIMA on overflow)
-    uint8_t tac;   // 0xFF07 - Timer Control
+    uint8_t div;
+    uint8_t tima;
+    uint8_t tma;
+    uint8_t tac;
 
     // Internal counters
-    uint16_t div_counter;   // Internal counter for DIV (increments every M-cycle)
-    uint16_t tima_counter;  // Internal counter for TIMA
+    uint16_t div_counter;
+    uint16_t tima_counter;
 
     // Helper functions
     uint16_t getTimerFrequency() const;

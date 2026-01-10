@@ -1,12 +1,3 @@
-//#include <iostream>
-//#include <fstream>
-//#include "h/Emulator.hpp"
-//#include "h/log.h"
-//#include "h/CPU.h"
-//
-//
-
-
 #include <iostream>
 #include <fstream>
 #include "h/Emulator.hpp"
@@ -38,7 +29,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Initialize SDL3
     if (! SDL_Init(SDL_INIT_VIDEO)) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return 1;
@@ -81,27 +71,62 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Create emulator
     Emulator emulator(argv[1]);
     emulator.bootEmu();
 
     bool running = true;
     SDL_Event event;
-
-    // Framebuffer for SDL (ARGB format)
     uint32_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
 
-    std::cout << "Emulator started.  Press ESC to quit." << std::endl;
+    std::cout << "Emulator started.   Press ESC to quit." << std::endl;
 
     while (running) {
         // Handle events
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
-            } else if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key. key == SDLK_ESCAPE) {
-                    running = false;
+            } else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
+                bool pressed = (event.type == SDL_EVENT_KEY_DOWN);
+
+                // Get current joypad state
+                static uint8_t joypad = 0xFF;
+
+
+                switch (event.key.key) {
+                    case SDLK_ESCAPE:
+                        running = false;
+                        break;
+
+                        // D-pad
+                    case SDLK_RIGHT:
+                        if (pressed) joypad &= ~0x01; else joypad |= 0x01;
+                        break;
+                    case SDLK_LEFT:
+                        if (pressed) joypad &= ~0x02; else joypad |= 0x02;
+                        break;
+                    case SDLK_UP:
+                        if (pressed) joypad &= ~0x04; else joypad |= 0x04;
+                        break;
+                    case SDLK_DOWN:
+                        if (pressed) joypad &= ~0x08; else joypad |= 0x08;
+                        break;
+
+                        // Buttons
+                    case SDLK_Z:  // A button
+                        if (pressed) joypad &= ~0x10; else joypad |= 0x10;
+                        break;
+                    case SDLK_X:  // B button
+                        if (pressed) joypad &= ~0x20; else joypad |= 0x20;
+                        break;
+                    case SDLK_SPACE:  // Select
+                        if (pressed) joypad &= ~0x40; else joypad |= 0x40;
+                        break;
+                    case SDLK_RETURN:  // Start
+                        if (pressed) joypad &= ~0x80; else joypad |= 0x80;
+                        break;
                 }
+
+                emulator. bus->setJoypadState(joypad);
             }
         }
 
@@ -115,11 +140,10 @@ int main(int argc, char* argv[]) {
             frame_cycles += cycles;
         }
 
-        // Render if frame is ready
         if (emulator.ppu->frame_ready) {
             emulator.ppu->frame_ready = false;
 
-            // Convert PPU framebuffer (0-3 colors) to SDL pixels (ARGB)
+            // Convert PPU framebuffer to SDL pixels
             for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
                 uint8_t color = emulator.ppu->framebuffer[i];
                 pixels[i] = DMG_PALETTE[color & 0x03];
@@ -131,8 +155,7 @@ int main(int argc, char* argv[]) {
             SDL_RenderTexture(renderer, texture, nullptr, nullptr);
             SDL_RenderPresent(renderer);
 
-            // Frame limiting (approximately 60 FPS)
-            SDL_Delay(16);
+            SDL_Delay(16);  // ~60 FPS
         }
     }
 
@@ -142,7 +165,6 @@ int main(int argc, char* argv[]) {
     SDL_DestroyWindow(window);
     SDL_Quit();
 
-    std::cout << "Emulator stopped." << std::endl;
     return 0;
 }
 ////---- Gameboy Doctor Blargg CPU instruction testing.
@@ -162,7 +184,6 @@ int main(int argc, char* argv[]) {
 //    for (int i = 0; i < MAX_INSTRUCTIONS; i++) {
 //        emulator.cpu->cycle();
 //
-//        // Optional: Stop if halted or infinite loop detected
 //        // if (emulator.cpu->isHalted()) break;
 //    }
 //
